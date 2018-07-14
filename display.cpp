@@ -4,14 +4,16 @@
 #include <X11/Xlib.h>
 #include <time.h>
 #include <vector>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 using namespace cv;
-
+using namespace boost::filesystem;
 Mat fire[9];
+Mat mnist[10];
 Mat segment[10];
 Mat blank;
-
+int size[10];
 void CallBackFunc(int event, int x, int y, int flags, void* userdata)
 {
     if  ( event == EVENT_LBUTTONDOWN )
@@ -71,30 +73,45 @@ public:
 
 	}
 
-	void randNine(Mat input[9])
+	void randNine( int type)
 	{
-		vector<int> sub;
-		for(int i = 0; i < 9; i++)
-			sub.push_back(i);
-		//A faster method
-		random_shuffle(sub.begin(), sub.end());
+		switch(type){
+			case 0:
+			{
+				vector<int> sub;
+				for(int i = 0; i < 9; i++)
+					sub.push_back(i);
+				//A faster method
+				random_shuffle(sub.begin(), sub.end());
 
-		for(int i = 0; i < 9; i++)
-		{
-			// srand(time(0));
-			// int r = rand() % 9;
-			// while (sub[r] == -1)
-			// {
-			// 	r = (r*2) % 9;
-			// 	cout << "Looping"<<endl;
-			// }
+				for(int i = 0; i < 9; i++)
+				{
+					Mat temp;
+					resize(fire[sub[i]], temp, nine[i/3][i%3].size());
+					temp.copyTo(bg(nine[i/3][i%3]));
 
-			//then
+				}
+				break;
+			}
 
-			Mat temp;
-			resize(input[sub[i]], temp, nine[i/3][i%3].size());
-			temp.copyTo(bg(nine[i/3][i%3]));
+			case 1:
+			{
+				randIndex();
+				vector<int> sub;
+				for(int i = 0; i < 10; i++)
+					sub.push_back(i);
+				//A faster method
+				random_shuffle(sub.begin(), sub.end());
 
+				for(int i = 0; i < 9; i++)
+				{
+					Mat temp;
+					resize(mnist[sub[i]], temp, nine[i/3][i%3].size());
+					temp.copyTo(bg(nine[i/3][i%3]));
+
+				}
+				break;
+			}	
 		}
 	}
 
@@ -116,6 +133,25 @@ public:
 		}
 	}
 
+	void randIndex()
+	{
+		for(int i = 0; i < 10; i++)
+		{
+			string folder = "./mnist/";
+			folder.append(to_string(i));
+			path p(folder.append("/"));
+			srand(time(0));
+			int index = rand() % size[i];
+			auto s = boost::filesystem::directory_iterator(p);
+			for( int iteration = 0;
+					iteration < index;
+					iteration++, s++){ ;}
+			//cout << s->path().string() << endl;
+			Mat temp = imread(s->path().string());
+			threshold(temp, mnist[i], 150, 255, THRESH_BINARY_INV);
+		}
+	}
+
 	void showIndicator(Mat input)
 	{	
 		Mat temp;
@@ -129,8 +165,9 @@ public:
 		}
 	}
 
-	void update(int time){
-		randNine(fire);
+	void update(int time, int type){
+
+		randNine(type);
 		randFive(segment);
 		imshow("Board", bg);
 		waitKey(time);
@@ -138,6 +175,7 @@ public:
 	}
 
 };
+
 
 
 void getScreenInfo(int &height, int &width)
@@ -172,21 +210,54 @@ bool loadImg()
 	return true;
 }
 
+void getMnistSize()
+{
+	for (int i = 0; i < 10; i++)
+	{
+		string folder = "./mnist/";
+		folder.append(to_string(i));
+		path p(folder.append("/"));
+		int count = 0;
+		for (auto s = boost::filesystem::directory_iterator(p); s != boost::filesystem::directory_iterator(); s++, count++)
+		{
+		}
+		//cout << i << " images: " << count << endl;
+		size[i] = count;
+	}
+}
 
 int main(int argc, char* argv[])
 {
 	int time = 1500;
-	if (argc == 2)
+	int type = 0;
+	if (argc > 1)
 	{
-		istringstream ( argv[1] ) >> time;
+		istringstream (argv[1]) >> time;
 	}
+	if(argc == 3)
+	{
+		istringstream (argv[2]) >> type;
+	}
+
 	int height, width;
 	getScreenInfo(height, width);
+    getMnistSize();
 	loadImg();
 	Board board(height, width);
 	while(true)
-		board.update(time);
+		board.update(time, type);
+
 	
+	// path p("./");
+    // for (auto i = boost::filesystem::directory_iterator(p); i != boost::filesystem::directory_iterator(); i++)
+    // {
+    //     if (!boost::filesystem::is_directory(i->path())) //we eliminate directories
+    //     {
+    //         cout << i->path().filename().string() << endl;
+    //     }
+    //     else
+    //         continue;
+    // }
 	return 0;
 }
 
