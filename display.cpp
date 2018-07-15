@@ -10,10 +10,10 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem;
 Mat fire[9];
-Mat mnist[10];
-Mat segment[10];
+Mat mnist[9];
+Mat segment[9];
 Mat blank;
-int size[10];
+int size[9];
 void CallBackFunc(int event, int x, int y, int flags, void* userdata)
 {
     if  ( event == EVENT_LBUTTONDOWN )
@@ -98,7 +98,7 @@ public:
 			{
 				randIndex();
 				vector<int> sub;
-				for(int i = 0; i < 10; i++)
+				for(int i = 0; i < 9; i++)
 					sub.push_back(i);
 				//A faster method
 				random_shuffle(sub.begin(), sub.end());
@@ -115,10 +115,10 @@ public:
 		}
 	}
 
-	void randFive(Mat input[10])
+	void randFive(Mat input[9])
 	{
 		vector<int> sub;
-		for(int i = 0; i < 10; i++)
+		for(int i = 0; i < 9; i++)
 			sub.push_back(i);
 		//A faster method
 		random_shuffle(sub.begin(), sub.end());
@@ -135,10 +135,10 @@ public:
 
 	void randIndex()
 	{
-		for(int i = 0; i < 10; i++)
+		for(int i = 0; i < 9; i++)
 		{
 			string folder = "./mnist/";
-			folder.append(to_string(i));
+			folder.append(to_string(i+1));
 			path p(folder.append("/"));
 			srand(time(0));
 			int index = rand() % size[i];
@@ -197,10 +197,10 @@ bool loadImg()
 
 	cout << "-- FireImg loaded" << endl;
 
-	for (int s = 0; s < 10; s++)
+	for (int s = 0; s < 9; s++)
 	{
 		string folder = "./segment/";
-		string target = to_string(s).append(".png");
+		string target = to_string(s+1).append(".png");
 		segment[s] = imread(folder.append(target));
 	}
 	cout << "-- SegmentImg loaded" << endl;
@@ -212,10 +212,10 @@ bool loadImg()
 
 void getMnistSize()
 {
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 9; i++)
 	{
 		string folder = "./mnist/";
-		folder.append(to_string(i));
+		folder.append(to_string(i+1));
 		path p(folder.append("/"));
 		int count = 0;
 		for (auto s = boost::filesystem::directory_iterator(p); s != boost::filesystem::directory_iterator(); s++, count++)
